@@ -2,4 +2,6 @@
     <string name="app_name">FTDI Terminal</string>
     <string name="action_settings">Settings</string>
     <string name="open_terminal">Open Terminal</string>
+    <string name="title_activity_terminal">Terminal</string>
+    <string name="terminal">terminal> </string>
 </resources>
