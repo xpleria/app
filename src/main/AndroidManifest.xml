@@ -18,6 +18,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".Terminal"
+            android:label="@string/title_activity_terminal"
+            android:parentActivityName=".Home"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="uk.ac.soton.ecs.np5g15.ftditerminal.Home" />
+        </activity>
     </application>
 
 </manifest>
