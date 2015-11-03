@@ -4,10 +4,14 @@
  * All rights reserved.
  *
  * Redistribution and use with or without modification,
- * are permitted provided that the following condition is met:
+ * are permitted provided that the following conditions are met:
  *
- * o Redistributions of source code must retain the above copyright notice, this
- *   condition and the following disclaimer.
+ * o Redistributions of source code must retain the above copyright notice, this list
+ *   of conditions and the following disclaimer.
+ *
+ * o Redistributions in binary form must reproduce the above copyright notice, this
+ *   list of conditions and the following disclaimer in the documentation and/or
+ *   other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,6 +37,7 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -41,7 +46,11 @@ public class Terminal extends AppCompatActivity {
     private TextView terminal;
     private ScrollView scrollView;
     private EditText editText;
+    private ImageButton upButton;
+    private ImageButton downButton;
     private String terminalText;
+    private CircularStringBuffer commandHistory;
+    private String tempCommand;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +64,10 @@ public class Terminal extends AppCompatActivity {
         terminal = (TextView)  findViewById(R.id.terminal);
         scrollView = (ScrollView) findViewById(R.id.scrollView);
         editText = (EditText)  findViewById(R.id.editText);
+        upButton = (ImageButton)  findViewById(R.id.upButton);
+        downButton = (ImageButton)  findViewById(R.id.downButton);
+
+        commandHistory = new CircularStringBuffer(30);
 
         Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/tex.otf");
         terminal.setTypeface(typeFace);
@@ -71,9 +84,31 @@ public class Terminal extends AppCompatActivity {
                 imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, InputMethodManager.HIDE_NOT_ALWAYS);
             }
         });
-
-
-
+        upButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (commandHistory.isCursorAtTop()) {
+                    commandHistory.addTemp(editText.getText().toString());
+                }
+                String previousCommand = commandHistory.getPrevious();
+                if (previousCommand != null) {
+                    editText.setText(previousCommand);
+                    editText.setSelection(editText.getText().length());
+                } else {
+                    // Reached end of queue
+                }
+            }
+        });
+        downButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                String nextCommand = commandHistory.getNext();
+                if (nextCommand != null) {
+                    editText.setText(nextCommand);
+                    editText.setSelection(editText.getText().length());
+                } else {
+                    // Reached end of queue
+                }
+            }
+        });
         editText.requestFocus();
         editText.addTextChangedListener(new TextWatcher() {
 
@@ -117,6 +152,7 @@ public class Terminal extends AppCompatActivity {
         terminalText = stringBuilder.toString();
         terminal.setText(stringBuilder.toString());
         editText.setText("");
+        commandHistory.add(command);
         execute(command);
         scrollDown();
     }
