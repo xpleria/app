@@ -46,7 +46,8 @@ public class Terminal extends AppCompatActivity {
     private ImageButton downButton;
     private String terminalText;
     private CircularStringBuffer commandHistory;
-    private String tempCommand;
+    private boolean displayCursor;
+    private boolean cursorOn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +74,90 @@ public class Terminal extends AppCompatActivity {
         terminalText = stringBuilder.toString();
         stringBuilder.append('_');
         terminal.setText(stringBuilder.toString());
+        cursorOn = false;
+        displayCursor = true;
+        runCursorThread();
 
+        editText.requestFocus();
+
+        setAllListeners();
+
+    }
+
+    private void displayCommand(String command) {
+        String string; // String is more efficient here than StringBuilder
+        string = terminalText + command;
+        terminal.setText(string);
+        scrollDown();
+    }
+
+    private void executeCommand(String command) {
+        command = command.substring(0, command.length() - 1);
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(terminalText);
+        stringBuilder.append(command);
+        terminalText = stringBuilder.toString();
+        terminal.setText(terminalText);
+        editText.setText("");
+        commandHistory.add(command);
+        execute(command);
+        scrollDown();
+    }
+
+    public void execute(String command) {
+        displayCursor = false;
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(terminalText);
+        stringBuilder.append("\n\texecuting ");
+        stringBuilder.append(command);
+        stringBuilder.append("...\n");
+        terminalText = stringBuilder.toString();
+        terminal.setText(stringBuilder.toString());
+        executeCallback();
+        scrollDown();
+    }
+
+    public void executeCallback() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(terminalText);
+        stringBuilder.append("\texecuted command\n");
+        stringBuilder.append(this.getString(R.string.terminal));
+        terminalText = stringBuilder.toString();
+        stringBuilder.append('_');
+        terminal.setText(stringBuilder.toString());
+        displayCursor = true;
+        scrollDown();
+    }
+
+    private void scrollDown() {
+        scrollView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                scrollView.fullScroll(ScrollView.FOCUS_DOWN);
+            }
+        }, 100);
+    }
+
+    private void runCursorThread() {
+        Runnable runnable = new Runnable() {
+            public void run() {
+                if (displayCursor) {
+                    if (cursorOn) {
+                        terminal.setText(terminalText + editText.getText().toString());
+                    } else {
+                        terminal.setText(terminalText + editText.getText().toString() + '_');
+                    }
+                    cursorOn = !cursorOn;
+                } else {
+                    terminal.setText(terminalText); // Display cursor is turned off only when something is being executed.
+                }
+                terminal.postDelayed(this, 400);
+            }
+        };
+        runnable.run();
+    }
+
+    private void setAllListeners() {
         terminal.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -105,7 +189,6 @@ public class Terminal extends AppCompatActivity {
                 }
             }
         });
-        editText.requestFocus();
         editText.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -130,59 +213,5 @@ public class Terminal extends AppCompatActivity {
                 }
             }
         });
-
     }
-
-    private void displayCommand(String command) {
-        String string; // String more efficient than StringBuilder here
-        string = terminalText + command + '_';
-        terminal.setText(string);
-        scrollDown();
-    }
-
-    private void executeCommand(String command) {
-        command = command.substring(0, command.length() - 1);
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(terminalText);
-        stringBuilder.append(command);
-        terminalText = stringBuilder.toString();
-        terminal.setText(stringBuilder.toString());
-        editText.setText("");
-        commandHistory.add(command);
-        execute(command);
-        scrollDown();
-    }
-
-    public void execute(String command) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(terminalText);
-        stringBuilder.append("\n\texecuting ");
-        stringBuilder.append(command);
-        stringBuilder.append("...\n");
-        terminalText = stringBuilder.toString();
-        terminal.setText(stringBuilder.toString());
-        executeCallback();
-        scrollDown();
-    }
-
-    public void executeCallback() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(terminalText);
-        stringBuilder.append("\texecuted command\n");
-        stringBuilder.append(this.getString(R.string.terminal));
-        terminalText = stringBuilder.toString();
-        stringBuilder.append('_');
-        terminal.setText(stringBuilder.toString());
-        scrollDown();
-    }
-
-    private void scrollDown() {
-        scrollView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                scrollView.fullScroll(ScrollView.FOCUS_DOWN);
-            }
-        }, 100);
-    }
-
 }
